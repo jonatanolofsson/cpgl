@@ -1,0 +1,176 @@
+/**
+ * Copyright 2011, 2012 Jonatan Olofsson
+ *
+ * This file is part of C++ GL Framework (CPGL).
+ *
+ * CPGL is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * CPGL is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with CPGL.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef CPGL_BASEELEMENT_HPP_
+#define CPGL_BASEELEMENT_HPP_
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+#include <string>
+#include <list>
+#include "cpgl.hpp"
+
+namespace CPGL {
+    namespace core {
+        using namespace Eigen;
+        class BaseElement {
+            public:
+                Affine3f base;
+                YAML::Node config;
+
+                std::string id;
+                typedef std::list<BaseElement*> basemap;
+                basemap children;
+                BaseElement* parent;
+
+                void register_child(const YAML::Node c) {
+                    children.push_back(get_factory(c["type"].as<std::string>())(c, this));
+                }
+
+                void register_children(const YAML::Node& c) {
+                    for(YAML::const_iterator it = c.begin(); it != c.end(); ++it) {
+                        register_child(*it);
+                    }
+                }
+
+                BaseElement(const YAML::Node& c, BaseElement* p = NULL) : config(c), parent(p) {
+                    base.setIdentity();
+                    if(config["id"]) {
+                        id = config["id"].as<std::string>();
+                        register_element(id, this);
+                    }
+                    if(config["children"]) {
+                        register_children(config["children"]);
+                    }
+                }
+
+                virtual ~BaseElement() {
+                    children.clear();
+                }
+
+                virtual void register_element(std::string id, BaseElement* ptr) {
+                    if(parent) parent->register_element(id, ptr);
+                }
+
+                virtual void unregister_element(std::string id) {
+                    if(parent) parent->unregister_element(id);
+                }
+
+                void look_at(const Vector3f pos, const Vector3f lookAt, const Vector3f up) {
+                    Vector3f n = (pos-lookAt).normalized();
+                    Vector3f u = (up.cross(n)).normalized();
+                    Vector3f v = n.cross(u);
+                    base.linear().row(0) = u;
+                    base.linear().row(1) = v;
+                    base.linear().row(2) = n;
+                    base.matrix().row(3) << 0,0,0,1;
+                    base.translation() = -base.linear()*pos;
+                }
+
+                void set_projection(
+                    const float near = 1.0,
+                    const float far = 80.0,
+                    const float right = 0.5,
+                    const float left = -0.5,
+                    const float top = 0.5,
+                    const float bottom = -0.5)
+                {
+                    base.matrix() << 2.0f*near/(right-left), 0.0f, (right+left)/(right-left), 0.0f,
+                        0.0f, 2.0f*near/(top-bottom), (top+bottom)/(top-bottom), 0.0f,
+                        0.0f, 0.0f, -(far + near)/(far - near), -2*far*near/(far - near),
+                        0.0f, 0.0f, -1.0f, 0.0f;
+                }
+
+                Affine3f get_full_base() {
+                    //~ return (parent == NULL) ? base : parent->get_base() * base;
+                    Affine3f res = (parent == NULL) ? base : parent->get_base() * base;
+                    //~ std::cout << ( (parent == NULL) ? "" : "*" ) << "(" << id << ")" << std::endl << base.matrix() << std::endl;
+                    return res;
+                }
+
+                Affine3f get_base() {
+                    //~ return (parent == NULL) ? base : parent->get_base() * base;
+                    Affine3f res = (parent->parent == NULL) ? base : parent->get_base() * base;
+                    //~ std::cout << ( (parent == NULL) ? "" : "*" ) << "(" << id << ")" << std::endl << base.matrix() << std::endl;
+                    return res;
+                }
+
+                float* get_projection() {
+                    return (parent == NULL) ? base.data() : parent->get_projection();
+                }
+
+                Affine3f& get_projection_matrix() {
+                    return (parent == NULL) ? base : parent->get_projection_matrix();
+                }
+
+                virtual void draw() = 0;
+
+                void DRAW() {
+                    draw();
+                    for(basemap::iterator it = children.begin(); it != children.end(); ++it) {
+                        (*it)->DRAW();
+                    }
+                }
+
+                virtual bool reshape(int, int) {return false;}
+                virtual bool mouse(int, int, int, int) {return false;}
+                virtual bool motion(int, int) {return false;}
+                virtual bool passivemotion(int,int) {return false;}
+                virtual bool keyboard(unsigned char, int, int) {return false;}
+
+                virtual bool RESHAPE(int w, int h) {
+                    if(reshape(w,h)) return true;
+                    for(basemap::iterator it = children.begin(); it != children.end(); ++it) {
+                        if((*it)->RESHAPE(w,h)) return true;
+                    }
+                    return false;
+                }
+                virtual bool MOUSE(int btn, int state, int x, int y) {
+                    if(mouse(btn,state,x,y)) return true;
+                    for(basemap::iterator it = children.begin(); it != children.end(); ++it) {
+                        if((*it)->MOUSE(btn,state,x,y)) return true;
+                    }
+                    return false;
+                }
+                virtual bool MOTION(int x, int y) {
+                    if(motion(x,y)) return true;
+                    for(basemap::iterator it = children.begin(); it != children.end(); ++it) {
+                        if((*it)->MOTION(x,y)) return true;
+                    }
+                    return false;
+                }
+                virtual bool PASSIVEMOTION(int x,int y) {
+                    if(passivemotion(x,y)) return true;
+                    for(basemap::iterator it = children.begin(); it != children.end(); ++it) {
+                        if((*it)->PASSIVEMOTION(x,y)) return true;
+                    }
+                    return false;
+                }
+                virtual bool KEYBOARD(unsigned char key, int x, int y) {
+                    if(keyboard(key,x,y)) return true;
+                    for(basemap::iterator it = children.begin(); it != children.end(); ++it) {
+                        if((*it)->KEYBOARD(key,x,y)) return true;
+                    }
+                    return false;
+                }
+        };
+    }
+}
+
+#endif

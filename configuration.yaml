@@ -1,0 +1,24 @@
+---
+directories:
+    root: /home/shared/projects/cpgl/
+    element_files: elements/
+    element_objects: build/elements/
+
+window:
+    width: 800
+    height: 600
+
+    near: 1.0
+    far: 80.0
+
+    children:
+        -   id: camera
+            type: camera
+            children:
+                -   id: ground
+                    type: ground
+                -   id: skybox
+                    type: skybox
+                -   id: flyer
+                    type: flyer
+                    model: bunnyplus.obj
