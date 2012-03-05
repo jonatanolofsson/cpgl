@@ -20,6 +20,10 @@
 #include "camera.hpp"
 
 namespace CPGL {
+    Camera::Camera(YAML::Node& c, BaseElement* p) : core::BaseElement(c, p) {
+        look_at((Vector3f() << 0,1,1).finished(), (Vector3f() << 0,1,0).finished(), Vector3f::UnitY());
+    }
+
     void Camera::rotation_from_dxdy(int dx, int dy) {
         static const double fiscale = 100.0;
 
@@ -44,7 +48,7 @@ namespace CPGL {
             return false;
         }
 
-        Vector3f dposition;
+        Vector3f dposition; dposition.setZero();
         if(key == 'w') {
             dposition = -Vector3f::UnitZ();
         } else if(key == 's') {
@@ -57,9 +61,9 @@ namespace CPGL {
             dposition = Vector3f::UnitY();
         } else if(key == 'q') {
             dposition = -Vector3f::UnitY();
-        }
+        } else return false;
 
-        base.translation() -= dposition * 0.1;
+        base.translation() -= dposition * config["speed_factor"].as<float>(1.0) * 0.1;
         return false;
     }
 
@@ -87,6 +91,6 @@ namespace CPGL {
 extern "C" {
     using namespace CPGL::core;
     BaseElement* factory(YAML::Node& c, BaseElement* p) {
-        return (BaseElement*)new CPGL::Camera(c,p);
+        return dynamic_cast<BaseElement*>(new CPGL::Camera(c,p));
     }
 }

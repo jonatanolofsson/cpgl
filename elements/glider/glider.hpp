@@ -16,34 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with CPGL.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef CPGL_CAMERA_HPP_
-#define CPGL_CAMERA_HPP_
+#ifndef GLIDER_ELEMENT_HPP_
+#define GLIDER_ELEMENT_HPP_
 
 #include "cpgl/cpgl.hpp"
+#include "elements/terrain/terrain.hpp"
 #include <Eigen/Core>
-#include <Eigen/Geometry>
 
 namespace CPGL {
     using namespace core;
-    using namespace tools;
-    class Camera : public BaseElement {
+    class Glider : public BaseElement {
         private:
+            Terrain* terrain;
             GLuint program;
             Model* object;
-            int mouse_click[2];
-
+            Vector2f direction;
         public:
-            Camera(YAML::Node& c, BaseElement* p);
+            Glider(YAML::Node& c, BaseElement* p);
 
-            void draw(){}
-
-            Vector3f position();
-            void rotation_from_dxdy(int dx, int dy);
-
-            bool keyboard(unsigned char key,int x, int y);
-            bool motion(int x, int y);
-            bool mouse(int button, int state, int x, int y);
+            void draw();
     };
 }
 

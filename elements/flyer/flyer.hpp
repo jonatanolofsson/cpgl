@@ -16,8 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with CPGL.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef FLYER_ELEMENT_HPP_
+#define FLYER_ELEMENT_HPP_
 
-#include "cpgl.hpp"
+#include "cpgl/cpgl.hpp"
 
 namespace CPGL {
     using namespace core;
@@ -35,3 +37,5 @@ namespace CPGL {
             void draw();
     };
 }
+
+#endif

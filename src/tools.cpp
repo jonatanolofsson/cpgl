@@ -20,9 +20,6 @@
 #include "yaml-cpp/yaml.h"
 #include "tools.hpp"
 #include "GL_utilities.h"
-extern "C" {
-#include "LoadTGA.h"
-}
 #include <iostream>
 
 namespace CPGL {
@@ -79,6 +76,26 @@ namespace CPGL {
 
             LoadTGATextureSimple(const_cast<char*>(path.c_str()), &tex);
             return tex;
+        }
+
+        TextureData load_texture_struct(const std::string module, const std::string texture) {
+            TextureData tex;
+            std::string path =
+                config["directories"]["root"].as<std::string>("")
+                + config["directories"]["element_files"].as<std::string>("")
+                + module + "/"
+                + config["directories"]["textures"].as<std::string>("")
+                + texture;
+            std::cout << "Loading texture struct: " <<  path << std::endl;
+
+            LoadTGATexture(const_cast<char*>(path.c_str()), &tex);
+            return tex;
+        }
+
+        void generate_mipmaps(GLuint tex) {
+            glBindTexture(GL_TEXTURE_2D, tex);
+            glGenerateMipmap(GL_TEXTURE_2D);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         }
 
         void print_error(const std::string fn) {

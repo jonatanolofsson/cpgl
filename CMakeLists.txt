@@ -41,10 +41,11 @@ add_definitions(-DGL_GLEXT_PROTOTYPES)
 option(CPGL_TEST ON)
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
+include_directories(${PROJECT_SOURCE_DIR})
 link_directories(${PROJECT_BINARY_DIR})
 
 set(SRC_DIR "src")
-add_library(CPGL SHARED ${SRC_DIR}/cpgl.cpp ${SRC_DIR}/glut.cpp ${SRC_DIR}/tools.cpp)
+add_library(CPGL SHARED ${SRC_DIR}/cpgl.cpp ${SRC_DIR}/glut.cpp ${SRC_DIR}/tools.cpp ${SRC_DIR}/window.cpp ${SRC_DIR}/baseelement.cpp)
 target_link_libraries(CPGL
     ${Boost_LIBRARIES}
     glut
@@ -53,8 +54,6 @@ target_link_libraries(CPGL
     ${YAMLCPP_LIBRARY}
 )
 
-add_subdirectory(elements)
-
 if(CPGL_TEST)
     add_executable(test main.cpp)
     target_link_libraries(test
@@ -62,6 +61,7 @@ if(CPGL_TEST)
         CPGL
         ${YAMLCPP_LIBRARY}
     )
+    add_subdirectory(elements)
 endif(CPGL_TEST)
 
 

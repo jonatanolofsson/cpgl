@@ -32,51 +32,21 @@ namespace CPGL {
         typedef boost::shared_ptr<Window> window_t;
         class Window : public boost::enable_shared_from_this<Window>, boost::noncopyable, public BaseElement {
             public:
+                Matrix<float, 3, Dynamic> directional_light;
+                Matrix<float, 4, Dynamic> directional_light_color;
+                Matrix<float, 3, Dynamic> positional_light;
+                Matrix<float, 4, Dynamic> positional_light_color;
+                Matrix<float, 4, Dynamic> ambient_light_color;
                 int window_id;
 
-                Window(const int id, const YAML::Node c) : BaseElement(c), window_id(id) {
-                    set_projection(
-                        c["near"].as<float>(1.0),
-                        c["far"].as<float>(80.0),
-                        c["right"].as<float>(0.5),
-                        c["left"].as<float>(-0.5),
-                        c["top"].as<float>(0.5),
-                        c["bottom"].as<float>(-0.5)
-                    );
-                    BaseElement::id = "Viewframe";
+                Window(const int id, const YAML::Node c);
 
-                    glClearColor(0.2,0.2,0.5,0);
-                    glEnable(GL_DEPTH_TEST);
-                    glEnable(GL_TEXTURE_2D);
-                }
+                int add_positional_light(Vector3f light_pos, Vector4f color, int n = -1);
+                int add_directional_light(Vector3f light_dir, Vector4f color, int n = -1);
+                int add_ambient_light(Vector4f color, int n = -1);
+                void upload_light(GLuint program, const std::string aname, const std::string ddir = "", const std::string dcolor = "", const std::string ppos = "", const std::string pcolor = "");
 
-                //~ ~Window() {
-                    //~ glut::DestroyWindow(window_id);
-                //~ }
-
-
-                typedef std::map<std::string, BaseElement*> element_map;
-                element_map elements;
-                BaseElement* get(std::string id) {
-                    if(elements.find(id) != elements.end()) {
-                        return elements[id];
-                    }
-                    return (NULL);
-                }
-
-                void register_element(std::string id, BaseElement* ptr) {
-                    assert(elements[id] == NULL); // No previous element with same id
-                    elements[id] = ptr;
-                }
-
-                void unregister_element(std::string id) {
-                    elements.erase(id);
-                }
-
-                void set_window_name(const std::string name) {
-                    config["window_name"] = name;
-                    if(window_id) glut::set_window_title(window_id, name);
-                }
+                void set_window_name(const std::string name);
 
                 virtual bool reshape(int, int) {glut::redisplay();return false;}
                 virtual bool mouse(int, int, int, int) {return false;}

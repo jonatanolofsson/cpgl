@@ -22,7 +22,19 @@
 
 #include <GL/gl.h>
 #include "types.hpp"
-
+extern "C" {
+    // This is the best library in the world
+    #include "LoadTGA2.h"
+    #ifdef bool
+        #undef bool
+    #endif
+    #ifdef true
+        #undef true
+    #endif
+    #ifdef false
+        #undef false
+    #endif
+}
 namespace CPGL {
     namespace tools {
         GLuint load_shaders(const std::string module,const std::string vs, const std::string fs);
@@ -36,6 +48,8 @@ namespace CPGL {
             const std::string texCoordVariableName);
 
         GLuint load_texture(const std::string module, const std::string texture);
+        TextureData load_texture_struct(const std::string module, const std::string texture);
+        void generate_mipmaps(GLuint tex);
         void print_error(const std::string);
     }
 }

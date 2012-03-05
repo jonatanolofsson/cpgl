@@ -1,0 +1,215 @@
+/**
+ * Copyright 2012 Jonatan Olofsson
+ *
+ * This file is part of C++ GL Framework (CPGL).
+ *
+ * CPGL is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * CPGL is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with CPGL.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+******************************************************
+README
+******************************************************
+CPGL is a miniature framework for constructing a 3d world with OpenGL.
+This document is intended as a short introduction to the installation,
+purpose and structure of CPGL.
+
+The main idea of the framework is to hide the structure and focus the
+development on the separate elements, and let CPGL act as the glue that
+brings the elements into the world. Keep in mind that it a _very_
+simplistic framework developed over a weekend, and if something seems
+non-trivial, it probably isn't.
+
+The GL_tools library used is a compilation of tools given in the course
+TSBK07 Computer Graphics at Linköping University, Sweden. This library
+is also intended for use in said course.
+
+***************
+(1) Installation
+***************
+To install CPGL, a few dependencies are needed;
+    * CMake (http://www.cmake.org/)
+    * Eigen 3 (http://eigen.tuxfamily.org/)
+    * Yaml-cpp (http://code.google.com/p/yaml-cpp/)
+    * The boost library (http://www.boost.org)
+    * OpenGL
+    * FreeGLUT
+
+All of these should be possible to find in the reposiories of any main
+Linux distribution (or could easily be installed locally; Eigen, for
+instance, is only header files).
+
+With the dependencies installed, build and install CPGL (instructions are
+given from the source directory)
+    * $ mkdir build
+    * $ cmake ..
+    * Optionally: $ ccmake . and configure the options available
+    * make
+    * sudo make install
+
+This should install the shared library files to your /usr/local/lib/.
+If not deselected, a testfile was also built with a working example of a 3D
+world, which can be invoked (from the build directory) with
+    $ ./bin/test ../configuration.yaml
+
+***************
+(2) Structure
+***************
+All elements of the world are divided into classes, which all inherit
+the BaseElement class. The BaseElement class is responsible for mainly
+three things
+
+    * Keeping a variable "config", which will be explained later
+    * Tracking the element's position in the scene-graph
+    * Keeping the 4x4 base matrix which describe the position and orientation of the element
+
+Note that the elements have very little to do with each other, and
+are separated to the extent that they are even compiled independently.
+This means that the world is easily extendible with non-interacting
+elements, while interaction has to be implemented separately.
+
+The idea is that new elements can be developed with total disregard
+of the structure of CPGL and the other elements of the scene.
+Base dependencies are easily implemented by specifying the children of the
+element in the configuration.
+
+***************
+(3) Configuration (using yaml-cpp)
+***************
+The configuration file, examplified in configuration.yaml and in Section (1),
+defines the scene-graph structure of the world.
+
+An example is given in configuration.yaml, but the main chaining idea is that elements
+are specified in YAML as follows
+
+window:
+    children:
+        -   id: camera
+            type: camera
+            speed_factor: 3.0
+            children:
+                -   id: skybox
+                    type: skybox
+
+The configuration is recursive, and can be chained as far as desired.
+The configuration file is passed to a window element and parsed to
+build the scene-graph. The single required parameter for each element is
+the "type", which specifies the name of the so-file where the class factory
+is.
+The "id" parameter specifies a unique id which is used to grab a handle for
+the element, so that it can be interacted with in code.
+
+    * Example: el = dynamic_cast<MyElement*>(get(id));
+
+The rest of the parameters are completely dynamically accessible through the
+"config" variable, defined in the BaseElement class.
+
+    * Example:
+        if(config["speed_factor"]) speed = config["speed_factor"].as<float>();
+        else speed = 1.0;
+
+    * Example: Specifying a default value in case speed_factor is not given in the configuration
+        speed = config["speed_factor"].as<float>(1.0);
+
+
+***************
+(4) Change of base (using Eigen)
+***************
+Each element is associated with a base (named "base") (defaulting to the 4x4 identity matrix).
+The base is defined as an Eigen Affine3f transformation, giving access to a full range of tools
+available in Eigen
+
+    * Example: Set the translation to (1,0,0)
+        base.translation() << 1,0,0;
+
+    * Example: Rotate the base around an arbitrary axis
+        base = AngleAxis(angle, axis) * base;
+
+More examples are available at http://eigen.tuxfamily.org/api/TutorialGeometry.html
+
+Since Eigen and OpenGL share the same memory model, Eigen matrices are easily uploaded.
+
+    * Example: (Relevant part: mymatrix.data())
+        glUniformMatrix4fv(glGetUniformLocation(program, "baseMatrix"), 1, GL_FALSE, get_base().data());
+
+In the previous example, another function of the BaseElement class was used: get_base().
+This function performs (and, for each drawing cycle, caches) the base of
+the current element. In the recursion, all parent bases are included save
+for the frustum projection (which is accessed through get_projection() or get_projection_matrix()).
+
+
+***************
+(5) Structure of an element
+***************
+In the configuration file, a root directory for the elements are given where
+each element is intended to have its own subdirectory. The subdirectory
+holds everything needed to compile and use the element, including
+
+    * Source and header
+    * Textures used
+    * Models used
+    * etc.
+
+The compiled .so-file is usually (at this stage) located in the build
+directory of the project, and the configuration file should be modified to
+point to the right directories.
+
+There are three things required by each element. First, the following
+code should exist (with very minor modifications) in the source file;
+
+
+:::::::::::: <Sample code> ::::::::::::
+extern "C" {
+    using namespace CPGL::core;
+    BaseElement* factory(YAML::Node& c, BaseElement* p) {
+        return dynamic_cast<BaseElement*>(new CPGL::MyElement(c,p));
+    }
+}
+:::::::::::::::::::::::::::::::::::::::
+
+
+Second, the constructor of the element should look as follows;
+
+:::::::::::: <Sample code> ::::::::::::
+    MyElement(YAML::Node& c, BaseElement* p) : BaseElement(c, p)
+:::::::::::::::::::::::::::::::::::::::
+
+The constructor may be used to initialise any GLSL programs, upload data etc.
+
+The drawing of the element is then done in the third required part, the draw()-function;
+:::::::::::: <Sample code> ::::::::::::
+    void Ground::draw(){...}
+:::::::::::::::::::::::::::::::::::::::
+
+
+Several GLUT events are registered and distributed to all the elements as well,
+
+    bool reshape(int, int);
+    bool mouse(int, int, int, int);
+    bool motion(int, int);
+    bool passivemotion(int,int);
+    bool keyboard(unsigned char, int, int);
+
+These functions may be optionally defined for the element class, in which
+case a true boolean return value signal that the recursive propagation of the
+event should be halted.
+
+Please see the included element examples for small, contained examples
+of elements.
+
+Also note the CMakeLists.txt-files in each directory, which contains the
+simple build-files.
+In a project, the "elements"-directory is intended to reside inside the
+parent project source directory. The use of CMake in said project is therefore
+advisable, in which case the elements-directory could simply be copied from the
+example implementation.

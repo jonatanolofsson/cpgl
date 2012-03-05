@@ -23,7 +23,7 @@
 #include <boost/shared_ptr.hpp>
 #include "yaml-cpp/yaml.h"
 extern "C" {
-#include "loadobj.h"
+    #include "loadobj.h"
 }
 
 namespace CPGL {

@@ -6,8 +6,12 @@ set(SUBDIRS
     ground
     skybox
     flyer
+    terrain
+    glider
 )
 
+add_definitions(-DGL_GLEXT_PROTOTYPES)
+
 foreach(dir ${SUBDIRS})
-add_subdirectory(${dir})
+    add_subdirectory(${dir})
 endforeach(dir)
