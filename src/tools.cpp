@@ -22,6 +22,10 @@
 #include "GL_utilities.h"
 #include <iostream>
 
+#include <string>
+#include <fstream>
+#include <streambuf>
+
 namespace CPGL {
     extern YAML::Node config;
     namespace tools {
@@ -100,6 +104,17 @@ namespace CPGL {
 
         void print_error(const std::string fn) {
             printError(fn.c_str());
+        }
+
+        void read_file(const std::string& file, std::string& out) {
+            std::ifstream t(file);
+
+            t.seekg(0, std::ios::end);
+            out.reserve(t.tellg());
+            t.seekg(0, std::ios::beg);
+
+            out.assign((std::istreambuf_iterator<char>(t)),
+                        std::istreambuf_iterator<char>());
         }
     }
 }

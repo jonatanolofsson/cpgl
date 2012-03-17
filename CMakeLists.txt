@@ -18,6 +18,7 @@ find_package(OpenGL)
 find_package(YamlCpp REQUIRED)
 find_package( Eigen3 )
 find_package( Boost COMPONENTS thread )
+find_package(OpenCL)
 
 add_subdirectory(lib)
 include_directories(
@@ -27,6 +28,7 @@ include_directories(
     ${YAMLCPP_INCLUDE_DIR}
     ${Eigen3_INCLUDE_DIR}
     ${Boost_INCLUDE_DIRS}
+    ${OPENCL_INCLUDE_DIR}
 )
 
 link_directories ( ${Boost_LIBRARY_DIRS} )
@@ -45,13 +47,14 @@ include_directories(${PROJECT_SOURCE_DIR})
 link_directories(${PROJECT_BINARY_DIR})
 
 set(SRC_DIR "src")
-add_library(CPGL SHARED ${SRC_DIR}/cpgl.cpp ${SRC_DIR}/glut.cpp ${SRC_DIR}/tools.cpp ${SRC_DIR}/window.cpp ${SRC_DIR}/baseelement.cpp)
+add_library(CPGL SHARED ${SRC_DIR}/cpgl.cpp ${SRC_DIR}/glut.cpp ${SRC_DIR}/opencl.cpp ${SRC_DIR}/tools.cpp ${SRC_DIR}/window.cpp ${SRC_DIR}/baseelement.cpp)
 target_link_libraries(CPGL
     ${Boost_LIBRARIES}
     glut
     GL
     GL_tools
     ${YAMLCPP_LIBRARY}
+    ${OPENCL_LIBRARIES}
 )
 
 if(CPGL_TEST)

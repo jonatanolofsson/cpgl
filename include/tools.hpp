@@ -51,6 +51,7 @@ namespace CPGL {
         TextureData load_texture_struct(const std::string module, const std::string texture);
         void generate_mipmaps(GLuint tex);
         void print_error(const std::string);
+        void read_file(const std::string& file, std::string& out);
     }
 }
 
