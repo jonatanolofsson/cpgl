@@ -29,6 +29,18 @@
 namespace CPGL {
     extern YAML::Node config;
     namespace tools {
+        GLuint compile_shader(GLuint type, const std::string path) {
+            std::string source;
+            read_file(path, source);
+            const GLchar* src = source.c_str();
+
+            GLuint id = glCreateShader(type);
+            glShaderSource(id, 1, &src, NULL);
+            glCompileShader(id);
+            printShaderInfoLog(id);
+            return id;
+
+        }
         GLuint load_shaders(const std::string module, const std::string vs, const std::string fs) {
             std::string path =
                 config["directories"]["root"].as<std::string>("")
@@ -37,10 +49,32 @@ namespace CPGL {
                 + config["directories"]["shaders"].as<std::string>("");
 
             std::cout << "Loading shaders: " <<  path << std::endl;
-            return loadShaders(
-                (path + vs).c_str(),
-                (path + fs).c_str()
-            );
+
+            GLuint p = glCreateProgram();
+            glAttachShader(p,compile_shader(GL_VERTEX_SHADER, path + vs));
+            glAttachShader(p,compile_shader(GL_FRAGMENT_SHADER, path + fs));
+            glLinkProgram(p);
+            glUseProgram(p);
+            printProgramInfoLog(p);
+            return p;
+        }
+        GLuint load_shaders(const std::string module, const std::string vs, const std::string gs, const std::string fs) {
+            std::string path =
+                config["directories"]["root"].as<std::string>("")
+                + config["directories"]["element_files"].as<std::string>("")
+                + module + "/"
+                + config["directories"]["shaders"].as<std::string>("");
+
+            std::cout << "Loading shaders: " <<  path << std::endl;
+
+            GLuint p = glCreateProgram();
+            glAttachShader(p,compile_shader(GL_VERTEX_SHADER, path + vs));
+            glAttachShader(p,compile_shader(GL_GEOMETRY_SHADER, path + gs));
+            glAttachShader(p,compile_shader(GL_FRAGMENT_SHADER, path + fs));
+            glLinkProgram(p);
+            glUseProgram(p);
+            printProgramInfoLog(p);
+            return p;
         }
 
         Model* load_model(
@@ -68,7 +102,8 @@ namespace CPGL {
             );
         }
 
-        GLuint load_texture(const std::string module, const std::string texture) {
+        GLuint load_texture(const std::string module, const std::string texture, const GLuint which_tex, const bool create_mipmaps) {
+            glActiveTexture(which_tex);
             GLuint tex;
             std::string path =
                 config["directories"]["root"].as<std::string>("")
@@ -79,10 +114,11 @@ namespace CPGL {
             std::cout << "Loading texture: " <<  path << std::endl;
 
             LoadTGATextureSimple(const_cast<char*>(path.c_str()), &tex);
+            if(create_mipmaps) generate_mipmaps(tex);
             return tex;
         }
 
-        TextureData load_texture_struct(const std::string module, const std::string texture) {
+        TextureData load_texture_struct(const std::string module, const std::string texture, const bool create_mipmaps) {
             TextureData tex;
             std::string path =
                 config["directories"]["root"].as<std::string>("")
@@ -93,6 +129,7 @@ namespace CPGL {
             std::cout << "Loading texture struct: " <<  path << std::endl;
 
             LoadTGATexture(const_cast<char*>(path.c_str()), &tex);
+            if(create_mipmaps) generate_mipmaps(tex.texID);
             return tex;
         }
 

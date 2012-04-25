@@ -6,14 +6,15 @@ extern "C" {
 #endif
 
 #ifdef __APPLE__
-	#include <OpenGL/gl3.h>
-//	#include <GLUT/glut.h>
-	#include "MicroGlut.h"
+    #include <OpenGL/gl3.h>
+//  #include <GLUT/glut.h>
+    #include "MicroGlut.h"
 #else
-	#include <GL/glut.h>
-	#include <GL/gl.h>
+    #include <GL/glut.h>
+    #include <GL/gl.h>
 #endif
-
+void printShaderInfoLog(GLuint obj);
+void printProgramInfoLog(GLuint obj);
 void printError(const char *functionName);
 GLuint loadShaders(const char *vertFileName, const char *fragFileName);
 void dumpInfo(void);

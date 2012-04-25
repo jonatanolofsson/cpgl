@@ -38,6 +38,7 @@ extern "C" {
 namespace CPGL {
     namespace tools {
         GLuint load_shaders(const std::string module,const std::string vs, const std::string fs);
+        GLuint load_shaders(const std::string module,const std::string vs, const std::string gs, const std::string fs);
 
         Model* load_model(
             const std::string module,
@@ -47,11 +48,17 @@ namespace CPGL {
             const std::string normalVariableName,
             const std::string texCoordVariableName);
 
-        GLuint load_texture(const std::string module, const std::string texture);
-        TextureData load_texture_struct(const std::string module, const std::string texture);
+        GLuint compile_shader(GLuint type, const std::string path);
+        GLuint load_texture(const std::string module, const std::string texture, const GLuint which_tex = GL_TEXTURE0, const bool create_mipmaps = true);
+        TextureData load_texture_struct(const std::string module, const std::string texture, const bool create_mipmaps = true);
         void generate_mipmaps(GLuint tex);
         void print_error(const std::string);
         void read_file(const std::string& file, std::string& out);
+    }
+
+    template<unsigned int ROWS, unsigned int STEP>
+    unsigned int index(unsigned int r, unsigned int c) {
+        return STEP*(c*ROWS + r);
     }
 }
 

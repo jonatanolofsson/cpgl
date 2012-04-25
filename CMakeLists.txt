@@ -47,7 +47,14 @@ include_directories(${PROJECT_SOURCE_DIR})
 link_directories(${PROJECT_BINARY_DIR})
 
 set(SRC_DIR "src")
-add_library(CPGL SHARED ${SRC_DIR}/cpgl.cpp ${SRC_DIR}/glut.cpp ${SRC_DIR}/opencl.cpp ${SRC_DIR}/tools.cpp ${SRC_DIR}/window.cpp ${SRC_DIR}/baseelement.cpp)
+add_library(CPGL SHARED
+    ${SRC_DIR}/cpgl.cpp
+    ${SRC_DIR}/glut.cpp
+    ${SRC_DIR}/tools.cpp
+    ${SRC_DIR}/window.cpp
+    ${SRC_DIR}/baseelement.cpp
+    ${SRC_DIR}/opencl.cpp
+    )
 target_link_libraries(CPGL
     ${Boost_LIBRARIES}
     glut

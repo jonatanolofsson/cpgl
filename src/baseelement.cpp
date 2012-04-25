@@ -97,11 +97,11 @@ namespace CPGL {
                 0.0f, 0.0f, -1.0f, 0.0f;
         }
 
-        Affine3f BaseElement::get_full_base() {
+        Transform<float, 3, Projective> BaseElement::get_full_base() {
             return get_projection_matrix() * get_base();
         }
 
-        Affine3f BaseElement::get_base() {
+        Transform<float, 3, Projective> BaseElement::get_base() {
             if(base_cached && !invalidate_cache) return base_cache;
             base_cache = (parent->parent == NULL) ? base : parent->get_base() * base;
             return base_cache;
@@ -111,7 +111,7 @@ namespace CPGL {
             return get_projection_matrix().data();
         }
 
-        Affine3f& BaseElement::get_projection_matrix() {
+        Transform<float, 3, Projective>& BaseElement::get_projection_matrix() {
             return (parent == NULL) ? base : parent->get_projection_matrix();
         }
 

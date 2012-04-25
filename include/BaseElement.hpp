@@ -34,8 +34,8 @@ namespace CPGL {
         typedef std::list<BaseElement*> basemap;
         class BaseElement {
             public:
-                Affine3f base;
-                Affine3f base_cache;
+                Transform<float, 3, Projective> base;
+                Transform<float, 3, Projective> base_cache;
                 bool base_cached;
                 YAML::Node config;
 
@@ -64,10 +64,10 @@ namespace CPGL {
                     const float top = 0.5,
                     const float bottom = -0.5);
 
-                Affine3f get_full_base();
-                Affine3f get_base();
+                Transform<float, 3, Projective> get_full_base();
+                Transform<float, 3, Projective> get_base();
                 float* get_projection();
-                Affine3f& get_projection_matrix();
+                Transform<float, 3, Projective>& get_projection_matrix();
 
                 virtual void draw() = 0;
 

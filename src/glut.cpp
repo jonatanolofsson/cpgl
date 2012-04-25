@@ -101,7 +101,7 @@ namespace CPGL {
             glutmap::iterator w = windows.find(window);
             if(w == windows.end()) return;
             w->second->DRAW();
-            glutSwapBuffers();glutPostRedisplay();
+            glutSwapBuffers();//glutPostRedisplay();
         }
         void reshape(int w, int h) {
             //~ std::cout << "reshape" << std::endl;
